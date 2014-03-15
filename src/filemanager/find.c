@@ -674,15 +674,15 @@ find_parameters (char **start_dir, ssize_t * start_dir_len,
     file_case_sens_cbox = check_new (y1++, x1, options.file_case_sens, file_case_label);
     add_widget (find_dlg, file_case_sens_cbox);
 
-	only_directories_cbox = check_new (y1++, x1, options.only_directories, file_only_directories_label);
-    add_widget (find_dlg, only_directories_cbox);
-
 #ifdef HAVE_CHARSET
     file_all_charsets_cbox =
         check_new (y1++, x1, options.file_all_charsets, file_all_charsets_label);
     add_widget (find_dlg, file_all_charsets_cbox);
 #endif
 
+    only_directories_cbox = check_new (y1++, x1, options.only_directories, file_only_directories_label);
+    add_widget (find_dlg, only_directories_cbox);
+   
     skip_hidden_cbox = check_new (y1++, x1, options.skip_hidden, file_skip_hidden_label);
     add_widget (find_dlg, skip_hidden_cbox);
 
@@ -1360,6 +1360,9 @@ do_search (WDialog * h)
         if (!(options.skip_hidden && (dp->d_name[0] == '.')))
         {
             gboolean search_ok;
+            gboolean is_dir;
+
+	    is_dir = FALSE;
 
             if ((subdirs_left != 0) && options.find_recurs && (directory != NULL))
             {                   /* Can directory be NULL ? */
@@ -1374,6 +1377,7 @@ do_search (WDialog * h)
 
                     if (mc_lstat (tmp_vpath, &tmp_stat) == 0 && S_ISDIR (tmp_stat.st_mode))
                     {
+			is_dir = TRUE;
                         push_directory (tmp_vpath);
                         subdirs_left--;
                     }
@@ -1385,7 +1389,7 @@ do_search (WDialog * h)
             search_ok = mc_search_run (search_file_handle, dp->d_name,
                                        0, strlen (dp->d_name), &bytes_found);
 
-            if (search_ok)
+            if (search_ok && (!options.only_directories || is_dir))
             {
                 if (content_pattern == NULL)
                     find_add_match (directory, dp->d_name);
